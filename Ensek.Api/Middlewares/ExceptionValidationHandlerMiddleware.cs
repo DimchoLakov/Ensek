@@ -1,6 +1,7 @@
 ﻿using Ensek.Api.Exceptions;
 using System.Net;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Ensek.Api.Middlewares;
 
@@ -27,11 +28,13 @@ public class ExceptionValidationHandlerMiddleware(RequestDelegate next)
         {
             case ModelValidationException modelValidationException:
                 httpStatusCode = HttpStatusCode.BadRequest;
-                result = JsonSerializer.Serialize(new
-                {
-                    ValidationDetails = true,
-                    Errors = modelValidationException.Errors
-                });
+                result = JsonSerializer.Serialize(
+                    new
+                    {
+                        ValidationDetails = true,
+                        Errors = modelValidationException.Errors
+                    },
+                    GetDefaultJsonSerializerOptions());
                 break;
             default:
                 break;
@@ -41,5 +44,15 @@ public class ExceptionValidationHandlerMiddleware(RequestDelegate next)
         context.Response.ContentType = "application/json";
 
         return context.Response.WriteAsync(result);
+    }
+
+    private static JsonSerializerOptions GetDefaultJsonSerializerOptions()
+    {
+        return new JsonSerializerOptions
+        {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        };
     }
 }
