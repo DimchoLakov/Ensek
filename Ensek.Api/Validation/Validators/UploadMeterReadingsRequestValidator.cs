@@ -42,7 +42,7 @@ public class UploadMeterReadingsRequestValidator : AbstractValidator<UploadMeter
             .NotEmpty()
             .NotNull()
             .WithMessage("Content Type must not be null or empty.")
-            .Equal("text/csv")
+            .Must(x => x.Contains("text/csv"))
             .WithMessage("Content Type must be \"text/csv\"");
 
         });
