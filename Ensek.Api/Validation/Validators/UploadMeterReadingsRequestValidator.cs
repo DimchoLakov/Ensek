@@ -10,16 +10,11 @@ public class UploadMeterReadingsRequestValidator : AbstractValidator<UploadMeter
         const int MaxFileSize = 5 * 1024 * 1024;
         const string AllowedExtension = ".csv";
 
-        RuleFor(x => x)
+        RuleFor(x => x.File)
             .NotNull()
-            .WithMessage("Request cannot be null.");
+            .WithMessage("CSV File is required.");
 
-        When(x => x != null, () =>
-            RuleFor(x => x.File)
-            .NotNull()
-            .WithMessage("CSV File is required."));
-
-        When(x => x != null && x.File != null, () =>
+        When(x => x.File != null, () =>
         {
             RuleFor(x => x.File.FileName)
             .NotNull()
@@ -27,15 +22,15 @@ public class UploadMeterReadingsRequestValidator : AbstractValidator<UploadMeter
             .WithMessage("File name cannot be null or empty.")
             .Must(x =>
             {
-                var extension = Path.GetExtension(x);
+                if (x == null)
+                {
+                    return false;
+                }
+
+                var extension = Path.GetExtension(x).ToLower();
                 return extension == AllowedExtension;
             })
             .WithMessage($"Only {AllowedExtension} files are allowed");
-
-            RuleFor(x => x.File.Name)
-            .NotNull()
-            .NotEmpty()
-            .WithMessage("File name cannot be null or empty.");
 
             RuleFor(x => x.File.Length)
             .GreaterThan(0)
