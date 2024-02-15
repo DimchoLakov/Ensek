@@ -7,7 +7,7 @@ public class UploadMeterReadingsRequestValidator : AbstractValidator<UploadMeter
 {
     public UploadMeterReadingsRequestValidator()
     {
-        const int MaxFileSize = 5 * 1024 * 1024;
+        const int MaxFileSize = 25 * 1024 * 1024;
         const string AllowedExtension = ".csv";
 
         RuleFor(x => x.File)
@@ -44,7 +44,6 @@ public class UploadMeterReadingsRequestValidator : AbstractValidator<UploadMeter
             .WithMessage("Content Type must not be null or empty.")
             .Must(x => x.Contains("text/csv"))
             .WithMessage("Content Type must be \"text/csv\"");
-
         });
     }
 }

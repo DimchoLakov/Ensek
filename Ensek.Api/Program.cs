@@ -1,6 +1,7 @@
 using Ensek.Api.Extensions;
 using Ensek.Api.Middlewares;
 using Ensek.Api.Validation.Validators;
+using Ensek.Meters.Domain.MappingProfiles;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,6 +24,7 @@ public class Program
             .AddSwaggerGen()
             .AddDatabase(builder.Configuration)
             .AddValidatorsFromAssemblyContaining<UploadMeterReadingsRequestValidator>()
+            .AddAutoMapper(typeof(EnsekMappingProfile))
             .AddApplicationServices();
 
         builder
@@ -44,6 +46,8 @@ public class Program
         app.UseMiddleware<ExceptionValidationHandlerMiddleware>();
 
         app.MapControllers();
+
+        app.Initialize();
 
         app.Run();
     }

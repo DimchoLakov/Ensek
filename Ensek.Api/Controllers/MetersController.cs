@@ -1,6 +1,6 @@
 using Ensek.Api.Contracts.Requests;
 using Ensek.Api.Validation;
-using Ensek.Meters.Domain.Services;
+using Ensek.Meters.Domain.Services.Meters;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Ensek.Api.Controllers
@@ -25,7 +25,7 @@ namespace Ensek.Api.Controllers
         {
             await _validationService.Validate(uploadMeterReadingsRequest);
 
-            var result = await _meterService.SaveReadings(uploadMeterReadingsRequest);
+            var result = await _meterService.ProcessReadings(uploadMeterReadingsRequest);
 
             return Ok(result);
         }

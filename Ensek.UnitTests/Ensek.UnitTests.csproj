@@ -27,4 +27,10 @@
 		<ProjectReference Include="..\Ensek.Api\Ensek.Api.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <None Update="TestFiles\Meter_Reading.csv">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+
 </Project>

@@ -6,7 +6,23 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <PackageReference Include="AutoMapper" Version="13.0.1" />
+	  <PackageReference Include="CsvHelper" Version="31.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
 	  <ProjectReference Include="..\Ensek.Api.Contracts\Ensek.Api.Contracts.csproj" />
+	  <ProjectReference Include="..\Ensek.Meters.Data\Ensek.Meters.Data.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="SeedFiles\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="SeedFiles\Test_Accounts.csv">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
 	</ItemGroup>
 
 </Project>

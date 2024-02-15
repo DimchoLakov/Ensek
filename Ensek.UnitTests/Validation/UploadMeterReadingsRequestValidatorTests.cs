@@ -143,7 +143,7 @@ public class UploadMeterReadingsRequestValidatorTests
 
     [Theory]
     [InlineData(0)]
-    [InlineData(10 * 1024 * 1024)] // Exceeds the maximum allowed file size
+    [InlineData(50 * 1024 * 1024)]
     public void Validate_When_File_Length_Is_Invalid_Should_Have_Validation_Error_For_File_Length(int fileLength)
     {
         // Arrange

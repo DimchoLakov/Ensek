@@ -22,7 +22,9 @@ public class ExceptionValidationHandlerMiddleware(RequestDelegate next)
     private static Task HandleException(HttpContext context, Exception exception)
     {
         var httpStatusCode = HttpStatusCode.InternalServerError;
-        var result = string.Empty;
+        var result = JsonSerializer.Serialize(
+            new[] { "Something went wrong. Please try again later." },
+            GetDefaultJsonSerializerOptions());
 
         switch (exception)
         {
