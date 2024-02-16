@@ -14,6 +14,7 @@ public class EnsekMappingProfile : Profile
             .ForMember(x => x.MeterRead, opt => opt.MapFrom(src => src.MeterReadValue));
 
         CreateMap<AccountCsv, Account>()
-            .ForMember(x => x.Id, opt => opt.MapFrom(src => src.AccountId));
+            .ForMember(x => x.Id, opt => opt.MapFrom(src => src.AccountId))
+            .ForMember(x => x.MeterReadings, opt => opt.Ignore());
     }
 }
