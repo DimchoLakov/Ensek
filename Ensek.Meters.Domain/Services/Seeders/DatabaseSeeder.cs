@@ -23,7 +23,7 @@ public class DatabaseSeeder : IDataSeeder
         _mapper = mapper;
     }
 
-    public void Seed()
+    public async Task Seed()
     {
         if (_dbContext.Database.ProviderName == "Microsoft.EntityFrameworkCore.InMemory")
         {
@@ -35,37 +35,45 @@ public class DatabaseSeeder : IDataSeeder
             Directory.GetCurrentDirectory());
 
         var file = File.OpenRead(fullPath);
-        var records = _csvReaderService.Read<AccountCsv>(file);
+        var batches = _csvReaderService.ReadCsvFileInBatches<AccountCsv>(file, Constants.DefaultBatchSize);
+        var accounts = new List<Account>();
 
-        var accounts = _mapper.Map<IEnumerable<Account>>(records);
+        await foreach (var batch in batches)
+        {
+            foreach (var account in batch)
+            {
+                var mappedItem = _mapper.Map<Account>(account);
+                accounts.Add(mappedItem);
+            }
+        }
 
         if (!_dbContext.Accounts.Any())
         {
             try
             {
-                _dbContext
+                await _dbContext
                     .Database
-                    .OpenConnection();
+                    .OpenConnectionAsync();
 
-                _dbContext
+                await _dbContext
                     .Database
-                    .ExecuteSqlRaw("SET IDENTITY_INSERT Accounts ON");
+                    .ExecuteSqlRawAsync("SET IDENTITY_INSERT Accounts ON");
 
-                _dbContext
+                await _dbContext
                     .Accounts
-                    .AddRange(accounts);
+                    .AddRangeAsync(accounts);
 
-                _dbContext.SaveChanges();
+                await _dbContext.SaveChangesAsync();
             }
             finally
             {
-                _dbContext
+                await _dbContext
                     .Database
-                    .ExecuteSqlRaw("SET IDENTITY_INSERT Accounts OFF");
+                    .ExecuteSqlRawAsync("SET IDENTITY_INSERT Accounts OFF");
 
-                _dbContext
+                await _dbContext
                     .Database
-                    .CloseConnection();
+                    .CloseConnectionAsync();
             }
         }
     }

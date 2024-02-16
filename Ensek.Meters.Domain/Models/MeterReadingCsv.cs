@@ -1,10 +1,15 @@
-﻿namespace Ensek.Meters.Domain.Models;
+﻿using CsvHelper.Configuration.Attributes;
+
+namespace Ensek.Meters.Domain.Models;
 
 public class MeterReadingCsv
 {
+    [Name("AccountId")]
     public long AccountId { get; set; }
 
-    public string MeterReadingDateTime { get; set; }
+    [TypeConverter(typeof(CustomDateTimeConverter))]
+    public DateTime MeterReadingDateTime { get; set; }
 
+    [Name("MeterReadValue")]
     public long MeterReadValue { get; set; }
 }

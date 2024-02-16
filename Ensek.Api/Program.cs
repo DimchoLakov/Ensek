@@ -47,7 +47,9 @@ public class Program
 
         app.MapControllers();
 
-        app.Initialize();
+        app.Initialize()
+            .GetAwaiter()
+            .GetResult();
 
         app.Run();
     }

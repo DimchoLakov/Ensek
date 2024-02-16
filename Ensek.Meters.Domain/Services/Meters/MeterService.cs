@@ -1,6 +1,4 @@
 ﻿using AutoMapper;
-using CsvHelper;
-using CsvHelper.Configuration;
 using Ensek.Api.Contracts.Requests;
 using Ensek.Api.Contracts.Responses;
 using Ensek.Meters.Data;
@@ -8,7 +6,7 @@ using Ensek.Meters.Data.Models;
 using Ensek.Meters.Domain.Models;
 using Ensek.Meters.Domain.Services.Csv;
 using Microsoft.EntityFrameworkCore;
-using System.Globalization;
+using static Ensek.Meters.Domain.Constants;
 
 namespace Ensek.Meters.Domain.Services.Meters;
 
@@ -30,7 +28,10 @@ public class MeterService : IMeterService
 
     public async Task<MeterReadingsResponse> ProcessReadings(UploadMeterReadingsRequest uploadMeterReadingsRequest)
     {
-        var batches = ReadCsvFileInBatches<MeterReadingCsv>(uploadMeterReadingsRequest.File.OpenReadStream(), 1000);
+        var batches = _csvReaderService.ReadCsvFileInBatches<MeterReadingCsv>(
+            uploadMeterReadingsRequest.File.OpenReadStream(),
+            DefaultBatchSize);
+
         var failedReadings = 0;
         var successReadings = 0;
 
@@ -40,15 +41,12 @@ public class MeterService : IMeterService
                 .GroupBy(x => x.AccountId)
                 .ToArray();
 
+            var validMeterReadings = new List<MeterReading>();
+
             foreach (var group in readingsGroupedByAccountId)
             {
                 var accountId = group.Key;
-
-                // Ignore readings with no assciated account
-                var account = await _ensekDbContext
-                    .Accounts
-                    .FindAsync(accountId);
-
+                var account = await _ensekDbContext.Accounts.FindAsync(accountId);
                 if (account == null)
                 {
                     continue;
@@ -67,44 +65,24 @@ public class MeterService : IMeterService
                     })
                     .FirstOrDefaultAsync();
 
-                var latestMeterReadingDateTime = accountWithLatestReading
-                    .LatestMeterReading
-                    ?.MeterReadingDateTime;
-
-                var validRecordsQuery = group.Where(x => x.MeterReadValue.ToString().Length == 5);
-                if (latestMeterReadingDateTime != null)
-                {
-                    validRecordsQuery = validRecordsQuery
-                        .Where(x => latestMeterReadingDateTime.Value < DateTime.ParseExact(
-                            x.MeterReadingDateTime, "dd/MM/yyyy hh:mm", CultureInfo.InvariantCulture));
-                }
-
-                var validRecords = validRecordsQuery
-                    .DistinctBy(x => new { x.MeterReadValue, x.MeterReadingDateTime })
-                    .ToArray();
-
+                var validRecords = GetValidRecords(group, accountWithLatestReading.LatestMeterReading);
                 if (!validRecords.Any())
                 {
+                    failedReadings += group.Count();
                     continue;
                 }
 
-                var recordsToAdd = _mapper.Map<MeterReading[]>(validRecords);
+                validMeterReadings.AddRange(validRecords);
+                successReadings += validRecords.Length;
+                failedReadings += group.Count() - validRecords.Length;
+            }
 
-                await _ensekDbContext
-                    .MeterReadings
-                    .AddRangeAsync(recordsToAdd);
-
-                successReadings += recordsToAdd.Length;
-                failedReadings += group.Count() - recordsToAdd.Length;
+            if (validMeterReadings.Any())
+            {
+                await _ensekDbContext.MeterReadings.AddRangeAsync(validMeterReadings);
+                await _ensekDbContext.SaveChangesAsync();
             }
         }
-
-        if (successReadings != 0)
-        {
-            await _ensekDbContext.SaveChangesAsync();
-        }
-
-        // return success readings and failed readings
 
         return new MeterReadingsResponse
         {
@@ -113,32 +91,26 @@ public class MeterService : IMeterService
         };
     }
 
-    private static async IAsyncEnumerable<List<T>> ReadCsvFileInBatches<T>(Stream stream, int batchSize)
+    private MeterReading[] GetValidRecords(
+        IGrouping<long, MeterReadingCsv> group,
+        MeterReading latestMeterReading)
     {
-        using var reader = new StreamReader(stream);
-        using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture));
-        var batch = new List<T>();
-        int recordsRead = 0;
+        var latestMeterReadingDateTime = latestMeterReading?.MeterReadingDateTime;
 
-        var header = csv.HeaderRecord;
+        // Get readings with values which have 5 digits in total
+        var validRecordsQuery = group.Where(x => Math.Abs(x.MeterReadValue).ToString().Length == DefaultMeterReadingValueCount);
 
-        while (await csv.ReadAsync())
+        if (latestMeterReadingDateTime != null)
         {
-            var record = csv.GetRecord<T>();
-            batch.Add(record);
-            recordsRead++;
-
-            if (recordsRead % batchSize == 0)
-            {
-                yield return batch;
-                batch = new List<T>();
-            }
+            // Further filter the query to get the readings newer than the latest one
+            validRecordsQuery = validRecordsQuery.Where(x => latestMeterReadingDateTime.Value < x.MeterReadingDateTime);
         }
 
-        // Return the last batch (if any)
-        if (batch.Count > 0)
-        {
-            yield return batch;
-        }
+        // Make sure we don't get duplicates
+        var validRecords = validRecordsQuery
+            .DistinctBy(x => new { x.MeterReadValue, x.MeterReadingDateTime })
+            .ToList();
+
+        return _mapper.Map<MeterReading[]>(validRecords);
     }
 }

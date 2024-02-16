@@ -5,7 +5,7 @@ namespace Ensek.Api;
 
 public static class ApplicationInitialization
 {
-    public static IApplicationBuilder Initialize(this IApplicationBuilder app)
+    public static async Task<IApplicationBuilder> Initialize(this IApplicationBuilder app)
     {
         using var serviceScope = app.ApplicationServices.CreateScope();
         var serviceProvider = serviceScope.ServiceProvider;
@@ -19,7 +19,7 @@ public static class ApplicationInitialization
         var dataSeeders = serviceProvider.GetServices<IDataSeeder>();
         foreach (var dataSeeder in dataSeeders)
         {
-            dataSeeder.Seed();
+            await dataSeeder.Seed();
         }
 
         return app;

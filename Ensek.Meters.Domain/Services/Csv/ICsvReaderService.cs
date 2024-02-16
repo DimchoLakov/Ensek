@@ -4,7 +4,5 @@ namespace Ensek.Meters.Domain.Services.Csv;
 
 public interface ICsvReaderService
 {
-    IEnumerable<T> Read<T>(IFormFile file);
-
-    IEnumerable<T> Read<T>(Stream file);
+    IAsyncEnumerable<List<T>> ReadCsvFileInBatches<T>(Stream stream, int batchSize);
 }
