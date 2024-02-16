@@ -221,6 +221,87 @@ public class MetersControllerTests : IClassFixture<EnsekWebApplicationFactory<Pr
         result.SuccessReadings.Should().Be(0);
     }
 
+    [Fact]
+    public async Task Uploading_Meter_Readings_Csv_File_With_Invalid_Headers_Should_Return_BadRequest()
+    {
+        // Arrange
+        var invalidHeader = "AccountId - MAKING THIS HEADER INVALID";
+        var validDate = DateTime.UtcNow.ToString(Constants.DefaultDateTimeFormat);
+        var validFormatReading = "65444";
+        var meterReadingCsvAsString = $"{invalidHeader},MeterReadingDateTime,MeterReadValue,\r\n" +
+            $"5,{validDate},{validFormatReading},\r\n" +
+            $"6,{validDate},{validFormatReading},";
+
+        using var streamContent = new StreamContent(new MemoryStream(Encoding.UTF8.GetBytes(meterReadingCsvAsString)));
+        streamContent.Headers.ContentType = new MediaTypeHeaderValue(CsvContentType);
+        var formData = new MultipartFormDataContent
+        {
+            { streamContent, FilePropertyName, FileName }
+        };
+
+        // Act
+        var response = await _client.PostAsync(Endpoint, formData);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var content = await response.Content.ReadAsStringAsync();
+        content.Should().Contain("File contains invalid Headers.");
+    }
+
+    [Fact]
+    public async Task Uploading_Meter_Readings_Csv_File_With_Invalid_Date_Should_Return_BadRequest()
+    {
+        // Arrange
+        var validDate = DateTime.UtcNow.ToString(Constants.DefaultDateTimeFormat);
+        var invalidDate = validDate + "extra characters, making this Date Time invalid.";
+        var validFormatReading = "65444";
+        var meterReadingCsvAsString = $"AccountId,MeterReadingDateTime,MeterReadValue,\r\n" +
+            $"5,{validDate},{validFormatReading},\r\n" +
+            $"6,{invalidDate},{validFormatReading},";
+
+        using var streamContent = new StreamContent(new MemoryStream(Encoding.UTF8.GetBytes(meterReadingCsvAsString)));
+        streamContent.Headers.ContentType = new MediaTypeHeaderValue(CsvContentType);
+        var formData = new MultipartFormDataContent
+        {
+            { streamContent, FilePropertyName, FileName }
+        };
+
+        // Act
+        var response = await _client.PostAsync(Endpoint, formData);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var content = await response.Content.ReadAsStringAsync();
+        content.Should().Contain("Unable to read file.");
+    }
+
+    [Fact]
+    public async Task Uploading_Meter_Readings_Csv_File_With_Invalid_Meter_Read_Value_Should_Return_BadRequest()
+    {
+        // Arrange
+        var validDate = DateTime.UtcNow.ToString(Constants.DefaultDateTimeFormat);
+        var validFormatReading = "65444";
+        var invalidFormatReading = "This is not a number.";
+        var meterReadingCsvAsString = $"AccountId,MeterReadingDateTime,MeterReadValue,\r\n" +
+            $"5,{validDate},{validFormatReading},\r\n" +
+            $"6,{validDate},{invalidFormatReading},";
+
+        using var streamContent = new StreamContent(new MemoryStream(Encoding.UTF8.GetBytes(meterReadingCsvAsString)));
+        streamContent.Headers.ContentType = new MediaTypeHeaderValue(CsvContentType);
+        var formData = new MultipartFormDataContent
+        {
+            { streamContent, FilePropertyName, FileName }
+        };
+
+        // Act
+        var response = await _client.PostAsync(Endpoint, formData);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var content = await response.Content.ReadAsStringAsync();
+        content.Should().Contain("Unable to read file.");
+    }
+
     private async Task SeedAccounts(long[] ids)
     {
         var accounts = new List<Account>();

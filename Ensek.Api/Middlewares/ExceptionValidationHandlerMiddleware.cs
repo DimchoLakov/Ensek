@@ -1,4 +1,6 @@
-﻿using Ensek.Api.Exceptions;
+﻿using CsvHelper;
+using CsvHelper.TypeConversion;
+using Ensek.Api.Exceptions;
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -36,6 +38,24 @@ public class ExceptionValidationHandlerMiddleware(RequestDelegate next)
                         ValidationDetails = true,
                         Errors = modelValidationException.Errors
                     },
+                    GetDefaultJsonSerializerOptions());
+                break;
+            case HeaderValidationException:
+                httpStatusCode = HttpStatusCode.BadRequest;
+                result = JsonSerializer.Serialize(
+                    new[] { "File contains invalid Headers." },
+                    GetDefaultJsonSerializerOptions());
+                break;
+            case ReaderException:
+                httpStatusCode = HttpStatusCode.BadRequest;
+                result = JsonSerializer.Serialize(
+                    new[] { $"Unable to read file. {exception.Message}" },
+                    GetDefaultJsonSerializerOptions());
+                break;
+            case TypeConverterException:
+                httpStatusCode = HttpStatusCode.BadRequest;
+                result = JsonSerializer.Serialize(
+                    new[] { $"Unable to read file. {exception.Message}" },
                     GetDefaultJsonSerializerOptions());
                 break;
             default:
