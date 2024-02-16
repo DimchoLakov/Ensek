@@ -52,9 +52,7 @@ public class MetersControllerTests : IClassFixture<EnsekWebApplicationFactory<Pr
             $"{firstAccountId},{validDate},{validFormatReading},\r\n" +
             $"{secondAccountId},{validDate},{invalidFormatReading},";
 
-        var bytes = Encoding.UTF8.GetBytes(meterReadingCsvAsString);
-        using var fileStream = new MemoryStream(bytes);
-        using var streamContent = new StreamContent(fileStream);
+        using var streamContent = new StreamContent(new MemoryStream(Encoding.UTF8.GetBytes(meterReadingCsvAsString)));
         streamContent.Headers.ContentType = new MediaTypeHeaderValue(CsvContentType);
         var formData = new MultipartFormDataContent
         {
@@ -91,9 +89,7 @@ public class MetersControllerTests : IClassFixture<EnsekWebApplicationFactory<Pr
             $"{invalidReadingAcccountId},{validDate},{firstValidFormatReading},\r\n" +
             $"{invalidReadingSecondAccountId},{validDate},{secondValidFormatReading}";
 
-        var bytes = Encoding.UTF8.GetBytes(meterReadingCsvAsString);
-        using var ms = new MemoryStream(bytes);
-        using var streamContent = new StreamContent(ms);
+        using var streamContent = new StreamContent(new MemoryStream(Encoding.UTF8.GetBytes(meterReadingCsvAsString)));
         streamContent.Headers.ContentType = new MediaTypeHeaderValue(CsvContentType);
         var formData = new MultipartFormDataContent
         {
@@ -127,10 +123,8 @@ public class MetersControllerTests : IClassFixture<EnsekWebApplicationFactory<Pr
             $"{existingAccountId},{dateTime},{firstValidFormatReading},\r\n" +
             $"{existingAccountId},{dateTime},{secondValidFormatReading},";
 
-        var bytes = Encoding.UTF8.GetBytes(csvAsString);
-        using var ms = new MemoryStream(bytes);
-        using var streamContent = new StreamContent(ms);
-        streamContent.Headers.ContentType = new MediaTypeHeaderValue("text/csv");
+        using var streamContent = new StreamContent(new MemoryStream(Encoding.UTF8.GetBytes(csvAsString)));
+        streamContent.Headers.ContentType = new MediaTypeHeaderValue(CsvContentType);
         var formData = new MultipartFormDataContent
         {
             { streamContent, FilePropertyName, FileName }
@@ -143,9 +137,7 @@ public class MetersControllerTests : IClassFixture<EnsekWebApplicationFactory<Pr
         csvAsString = $"AccountId,MeterReadingDateTime,MeterReadValue,\r\n" +
             $"{existingAccountId},{dateTime},{thirdValidFormatReading},";
 
-        bytes = Encoding.UTF8.GetBytes(csvAsString);
-        using var newMs = new MemoryStream(bytes);
-        using var newStreamContent = new StreamContent(ms);
+        using var newStreamContent = new StreamContent(new MemoryStream(Encoding.UTF8.GetBytes(csvAsString)));
         streamContent.Headers.ContentType = new MediaTypeHeaderValue(CsvContentType);
         formData = new MultipartFormDataContent
         {
@@ -176,9 +168,7 @@ public class MetersControllerTests : IClassFixture<EnsekWebApplicationFactory<Pr
             $"{accountId},{dateTime},{validFormatReading},\r\n" +
             $"{accountId},{dateTime},{validFormatReading},";
 
-        var bytes = Encoding.UTF8.GetBytes(csvAsString);
-        using var ms = new MemoryStream(bytes);
-        using var streamContent = new StreamContent(ms);
+        using var streamContent = new StreamContent(new MemoryStream(Encoding.UTF8.GetBytes(csvAsString)));
         streamContent.Headers.ContentType = new MediaTypeHeaderValue(CsvContentType);
         var formData = new MultipartFormDataContent
         {
@@ -212,9 +202,7 @@ public class MetersControllerTests : IClassFixture<EnsekWebApplicationFactory<Pr
             $"{accountId},{firstDateTime},{firstInvalidFormatReading},\r\n" +
             $"{accountId},{secondDateTime},{secondInvalidFormatReading},";
 
-        var bytes = Encoding.UTF8.GetBytes(csvAsString);
-        using var ms = new MemoryStream(bytes);
-        using var streamContent = new StreamContent(ms);
+        using var streamContent = new StreamContent(new MemoryStream(Encoding.UTF8.GetBytes(csvAsString)));
         streamContent.Headers.ContentType = new MediaTypeHeaderValue(CsvContentType);
         var formData = new MultipartFormDataContent
         {
