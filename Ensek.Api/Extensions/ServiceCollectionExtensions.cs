@@ -1,5 +1,7 @@
 ﻿using Ensek.Api.Validation;
 using Ensek.Meters.Data;
+using Ensek.Meters.Data.Repositories.Accounts;
+using Ensek.Meters.Data.Repositories.MeterReadings;
 using Ensek.Meters.Domain.Services.Csv;
 using Ensek.Meters.Domain.Services.Initializers;
 using Ensek.Meters.Domain.Services.Meters;
@@ -23,5 +25,7 @@ public static class ServiceCollectionExtensions
         .AddTransient<IMeterService, MeterService>()
         .AddTransient<ICsvReaderService, CsvReaderService>()
         .AddTransient<IInitializer, DatabaseInitializer>()
-        .AddTransient<IDataSeeder, DatabaseSeeder>();
+        .AddTransient<IDataSeeder, DatabaseSeeder>()
+        .AddScoped<IAccountRepository, AccountRepository>()
+        .AddScoped<IMeterReadingRepository, MeterReadingRepository>();
 }

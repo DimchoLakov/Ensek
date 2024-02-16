@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Ensek.ServiceTests;
 
@@ -13,15 +14,12 @@ public class EnsekWebApplicationFactory<TProgram>
     {
         builder.ConfigureServices(services =>
         {
-            var dbContextDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<EnsekDbContext>));
-            services.Remove(dbContextDescriptor);
+            services.RemoveAll(typeof(DbContextOptions<EnsekDbContext>));
 
             services.AddDbContext<EnsekDbContext>(options =>
             {
-                options.UseInMemoryDatabase(Guid.NewGuid().ToString());
+                options.UseInMemoryDatabase("InMemoryDatabase");
             });
         });
-
-        builder.UseEnvironment("Development");
     }
 }

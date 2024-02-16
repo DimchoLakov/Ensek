@@ -1,11 +1,11 @@
 ﻿using AutoMapper;
 using Ensek.Api.Contracts.Requests;
 using Ensek.Api.Contracts.Responses;
-using Ensek.Meters.Data;
 using Ensek.Meters.Data.Models;
+using Ensek.Meters.Data.Repositories.Accounts;
+using Ensek.Meters.Data.Repositories.MeterReadings;
 using Ensek.Meters.Domain.Models;
 using Ensek.Meters.Domain.Services.Csv;
-using Microsoft.EntityFrameworkCore;
 using static Ensek.Meters.Domain.Constants;
 
 namespace Ensek.Meters.Domain.Services.Meters;
@@ -13,20 +13,25 @@ namespace Ensek.Meters.Domain.Services.Meters;
 public class MeterService : IMeterService
 {
     private readonly ICsvReaderService _csvReaderService;
-    private readonly EnsekDbContext _ensekDbContext;
+    private readonly IAccountRepository _accountRepository;
+    private readonly IMeterReadingRepository _meterReadingRepository;
     private readonly IMapper _mapper;
 
     public MeterService(
         ICsvReaderService csvReaderService,
-        EnsekDbContext ensekDbContext,
+        IAccountRepository accountRepository,
+        IMeterReadingRepository meterReadingRepository,
         IMapper mapper)
     {
         _csvReaderService = csvReaderService;
-        _ensekDbContext = ensekDbContext;
+        _accountRepository = accountRepository;
+        _meterReadingRepository = meterReadingRepository;
         _mapper = mapper;
     }
 
-    public async Task<MeterReadingsResponse> ProcessReadings(UploadMeterReadingsRequest uploadMeterReadingsRequest)
+    public async Task<MeterReadingsResponse> ProcessReadings(
+        UploadMeterReadingsRequest uploadMeterReadingsRequest,
+        CancellationToken cancellationToken)
     {
         var batches = _csvReaderService.ReadCsvFileInBatches<MeterReadingCsv>(
             uploadMeterReadingsRequest.File.OpenReadStream(),
@@ -46,26 +51,24 @@ public class MeterService : IMeterService
             foreach (var group in readingsGroupedByAccountId)
             {
                 var accountId = group.Key;
-                var account = await _ensekDbContext.Accounts.FindAsync(accountId);
-                if (account == null)
+                var accountExists = await _accountRepository.ExistsAsync(
+                    accountId,
+                    cancellationToken);
+
+                if (!accountExists)
                 {
+                    failedReadings += group.Count();
                     continue;
                 }
 
-                var accountWithLatestReading = await _ensekDbContext
-                    .Accounts
-                    .Include(x => x.MeterReadings)
-                    .Where(x => x.Id == accountId)
-                    .Select(x => new
-                    {
-                        AccountId = x.Id,
-                        LatestMeterReading = x.MeterReadings
-                            .OrderByDescending(m => m.MeterReadingDateTime)
-                            .FirstOrDefault()
-                    })
-                    .FirstOrDefaultAsync();
+                var accountWithLatestReading = await _accountRepository.GetAccountByIdWithLatestReadingAsync(
+                    accountId,
+                    cancellationToken);
 
-                var validRecords = GetValidRecords(group, accountWithLatestReading.LatestMeterReading);
+                var validRecords = GetValidRecords(
+                    group,
+                    accountWithLatestReading.LatestMeterReading);
+
                 if (!validRecords.Any())
                 {
                     failedReadings += group.Count();
@@ -79,8 +82,9 @@ public class MeterService : IMeterService
 
             if (validMeterReadings.Any())
             {
-                await _ensekDbContext.MeterReadings.AddRangeAsync(validMeterReadings);
-                await _ensekDbContext.SaveChangesAsync();
+                await _meterReadingRepository.BulkSave(
+                    validMeterReadings,
+                    cancellationToken);
             }
         }
 
@@ -98,12 +102,14 @@ public class MeterService : IMeterService
         var latestMeterReadingDateTime = latestMeterReading?.MeterReadingDateTime;
 
         // Get readings with values which have 5 digits in total
-        var validRecordsQuery = group.Where(x => Math.Abs(x.MeterReadValue).ToString().Length == DefaultMeterReadingValueCount);
+        var validRecordsQuery = group.Where(
+            x => Math.Abs(x.MeterReadValue).ToString().Length == DefaultMeterReadingValueCount);
 
         if (latestMeterReadingDateTime != null)
         {
             // Further filter the query to get the readings newer than the latest one
-            validRecordsQuery = validRecordsQuery.Where(x => latestMeterReadingDateTime.Value < x.MeterReadingDateTime);
+            validRecordsQuery = validRecordsQuery.Where(
+                x => latestMeterReadingDateTime.Value < x.MeterReadingDateTime);
         }
 
         // Make sure we don't get duplicates

@@ -21,11 +21,13 @@ namespace Ensek.Api.Controllers
         }
 
         [HttpPost("/meter-reading-uploads")]
-        public async Task<ActionResult> UploadMeterReadings(UploadMeterReadingsRequest uploadMeterReadingsRequest)
+        public async Task<ActionResult> UploadMeterReadings(
+            UploadMeterReadingsRequest uploadMeterReadingsRequest,
+            CancellationToken cancellationToken)
         {
             await _validationService.Validate(uploadMeterReadingsRequest);
 
-            var result = await _meterService.ProcessReadings(uploadMeterReadingsRequest);
+            var result = await _meterService.ProcessReadings(uploadMeterReadingsRequest, cancellationToken);
 
             return Ok(result);
         }

@@ -14,7 +14,7 @@ public class DatabaseInitializer : IInitializer
 
     public void Initialize()
     {
-        if (_dbContext.Database.ProviderName == "Microsoft.EntityFrameworkCore.InMemory")
+        if (_dbContext.Database.ProviderName == Constants.InMemoryProviderName)
         {
             return;
         }

@@ -5,5 +5,7 @@ namespace Ensek.Meters.Domain.Services.Meters;
 
 public interface IMeterService
 {
-    Task<MeterReadingsResponse> ProcessReadings(UploadMeterReadingsRequest uploadMeterReadingsRequest);
+    Task<MeterReadingsResponse> ProcessReadings(
+        UploadMeterReadingsRequest uploadMeterReadingsRequest,
+        CancellationToken cancellationToken);
 }

@@ -25,14 +25,15 @@ public class DatabaseSeeder : IDataSeeder
 
     public async Task Seed()
     {
-        if (_dbContext.Database.ProviderName == "Microsoft.EntityFrameworkCore.InMemory")
+        if (_dbContext.Database.ProviderName == Constants.InMemoryProviderName)
         {
             return;
         }
 
+        var basePath = AppDomain.CurrentDomain.BaseDirectory;
         var fullPath = Path.GetFullPath(
-            "../Ensek.Meters.Domain/SeedFiles/Test_Accounts.csv",
-            Directory.GetCurrentDirectory());
+            "./SeedFiles/Test_Accounts.csv",
+            basePath);
 
         var file = File.OpenRead(fullPath);
         var batches = _csvReaderService.ReadCsvFileInBatches<AccountCsv>(file, Constants.DefaultBatchSize);
