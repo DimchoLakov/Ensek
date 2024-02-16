@@ -9,6 +9,8 @@ namespace Ensek.Api;
 
 public class Program
 {
+    private const string CorsPolicyName = "EnsekCorsPolicy";
+
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
@@ -25,7 +27,16 @@ public class Program
             .AddDatabase(builder.Configuration)
             .AddValidatorsFromAssemblyContaining<UploadMeterReadingsRequestValidator>()
             .AddAutoMapper(typeof(EnsekMappingProfile))
-            .AddApplicationServices();
+            .AddApplicationServices()
+            .AddCors(options =>
+            {
+                options.AddPolicy(CorsPolicyName, builder =>
+                {
+                    builder.AllowAnyOrigin()
+                           .AllowAnyMethod()
+                           .AllowAnyHeader();
+                });
+            });
 
         builder
             .Services
@@ -41,7 +52,8 @@ public class Program
         }
 
         app.UseHttpsRedirection()
-           .UseRouting();
+           .UseRouting()
+           .UseCors(CorsPolicyName);
 
         app.UseMiddleware<ExceptionValidationHandlerMiddleware>();
 
