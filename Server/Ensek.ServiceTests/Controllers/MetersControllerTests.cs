@@ -302,6 +302,54 @@ public class MetersControllerTests : IClassFixture<EnsekWebApplicationFactory<Pr
         content.Should().Contain("Unable to read file.");
     }
 
+    [Fact]
+    public async Task Uploading_Valid_Meter_Readings_Csv_File_Should_Not_Store_Same_Reading_Twice_With_Thousands_Of_Records()
+    {
+        // Arrange
+        var accountIds = new long[] { 15000, 16000, 17000, 18000 };
+        await SeedAccounts(accountIds);
+        var numberOfRows = 20000;
+        var csvAsString = GenerateCsvWithSameReadingValuesAndTimes(numberOfRows, accountIds);
+
+        using var streamContent = new StreamContent(new MemoryStream(Encoding.UTF8.GetBytes(csvAsString)));
+        streamContent.Headers.ContentType = new MediaTypeHeaderValue(CsvContentType);
+        var formData = new MultipartFormDataContent
+        {
+            { streamContent, FilePropertyName, FileName }
+        };
+
+        // Act
+        var response = await _client.PostAsync(Endpoint, formData);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var content = await response.Content.ReadAsStringAsync();
+        var result = JsonSerializer.Deserialize<MeterReadingsResponse>(content, SerializerSettings.Default);
+
+        result.FailedReadings.Should().Be(numberOfRows - accountIds.Length);
+        result.SuccessReadings.Should().Be(accountIds.Length);
+    }
+
+    private static string GenerateCsvWithSameReadingValuesAndTimes(int numberOfRows, long[] accountIds)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("AccountId,MeterReadingDateTime,MeterReadValue,\r\n");
+
+        var rowsPerAccount = numberOfRows / accountIds.Length;
+
+        foreach (var accountId in accountIds)
+        {
+            var dateTimeNow = DateTime.UtcNow;
+
+            for (int i = 0; i < rowsPerAccount; i++)
+            {
+                sb.AppendLine($"{accountId},{dateTimeNow}, 55111,\r\n");
+            }
+        }
+
+        return sb.ToString().Trim();
+    }
+
     private async Task SeedAccounts(long[] ids)
     {
         var accounts = new List<Account>();

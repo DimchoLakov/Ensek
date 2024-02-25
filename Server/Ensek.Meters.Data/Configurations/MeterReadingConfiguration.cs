@@ -9,5 +9,9 @@ public class MeterReadingConfiguration : IEntityTypeConfiguration<MeterReading>
     public void Configure(EntityTypeBuilder<MeterReading> builder)
     {
         builder.HasKey(x => x.Id);
+
+        builder
+            .HasIndex(x => new { x.MeterRead, x.MeterReadingDateTime })
+            .IsUnique();
     }
 }

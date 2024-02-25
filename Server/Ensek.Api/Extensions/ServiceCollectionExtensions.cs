@@ -5,6 +5,8 @@ using Ensek.Meters.Data.Repositories.MeterReadings;
 using Ensek.Meters.Domain.Services.Csv;
 using Ensek.Meters.Domain.Services.Initializers;
 using Ensek.Meters.Domain.Services.Meters;
+using Ensek.Meters.Domain.Services.Meters.Caching;
+using Ensek.Meters.Domain.Services.Meters.Filtering;
 using Ensek.Meters.Domain.Services.Seeders;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,5 +29,7 @@ public static class ServiceCollectionExtensions
         .AddTransient<IInitializer, DatabaseInitializer>()
         .AddTransient<IDataSeeder, DatabaseSeeder>()
         .AddScoped<IAccountRepository, AccountRepository>()
-        .AddScoped<IMeterReadingRepository, MeterReadingRepository>();
+        .AddScoped<IMeterReadingRepository, MeterReadingRepository>()
+        .AddScoped<IAccountMetersRetrievalCachingService, AccountMetersRetrievalCachingService>()
+        .AddTransient<IMeterFilteringService, MeterFilteringService>();
 }

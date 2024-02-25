@@ -21,6 +21,8 @@ namespace Ensek.Api.Controllers
         }
 
         [HttpPost("/meter-reading-uploads")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> UploadMeterReadings(
             UploadMeterReadingsRequest uploadMeterReadingsRequest,
             CancellationToken cancellationToken)

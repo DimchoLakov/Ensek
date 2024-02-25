@@ -4,6 +4,7 @@ using Ensek.Meters.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Ensek.Meters.Data.Migrations
 {
     [DbContext(typeof(EnsekDbContext))]
-    partial class EnsekDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240225194115_AddUniqueMeterReadAndDateTimeIndex")]
+    partial class AddUniqueMeterReadAndDateTimeIndex
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

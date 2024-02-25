@@ -51,11 +51,11 @@ public class Program
             app.UseSwaggerUI();
         }
 
-        app.UseHttpsRedirection()
+        app
+           .UseMiddleware<ExceptionValidationHandlerMiddleware>()
+           .UseHttpsRedirection()
            .UseRouting()
            .UseCors(CorsPolicyName);
-
-        app.UseMiddleware<ExceptionValidationHandlerMiddleware>();
 
         app.MapControllers();
 
