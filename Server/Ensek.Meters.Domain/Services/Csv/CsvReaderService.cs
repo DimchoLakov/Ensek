@@ -1,5 +1,4 @@
-﻿
-using CsvHelper;
+﻿using CsvHelper;
 using CsvHelper.Configuration;
 using System.Globalization;
 
@@ -11,18 +10,15 @@ public class CsvReaderService : ICsvReaderService
     {
         using var reader = new StreamReader(stream);
         using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture));
-
         var batch = new List<T>();
-        int recordsRead = 0;
 
         while (await csv.ReadAsync())
         {
             var record = csv.GetRecord<T>();
             batch.Add(record);
-            recordsRead++;
 
             // if records read reaches batch size return the batch, and reset batch list
-            if (recordsRead % batchSize == 0)
+            if (batch.Count % batchSize == 0)
             {
                 yield return batch;
                 batch = new List<T>();
